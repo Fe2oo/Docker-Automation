@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8" />
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+</head>
+<body class="p-4">
+    <div class="container">
+        <div class="text-center">
+            <h1>Docker Automation 🚀</h1>
+        </div>
+        <!-- Dockerfile Creator -->
+        <div class="card mb-4">
+            <div class="card-header">Create Dockerfile</div>
+            <div class="card-body">
+                <form id="dockerfileForm">
+                    <input
+                        type="text"
+                        class="form-control mb-2"
+                        name="path"
+                        placeholder="Path to save Dockerfile"
+                    />
+                    <textarea
+                        class="form-control mb-2"
+                        name="content"
+                        rows="5"
+                        placeholder="Dockerfile content here..."
+                    ></textarea>
+                    <button type="submit" class="btn btn-primary">Create Dockerfile</button>
+                </form>
+                <div id="dockerfileMsg" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Build Image -->
+        <div class="card mb-4">
+            <div class="card-header">Build Docker Image</div>
+            <div class="card-body">
+                <form id="buildForm" enctype="multipart/form-data">
+                    <input type="file" class="form-control mb-2" name="dockerfile_file" accept="Dockerfile,Dockerfile.*">
+                    <input type="text" class="form-control mb-2" name="image_name" placeholder="Image name" required>
+                    <input type="text" class="form-control mb-2" name="image_tag" placeholder="Image tag (e.g., latest)" required>
+                    <button type="submit" class="btn btn-success">Build Image</button>
+                </form>
+                <div id="buildMsg" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Run Container -->
+        <div class="card mb-4">
+            <div class="card-header">Run Container</div>
+            <div class="card-body">
+                <form id="runForm">
+                    <input
+                        type="text"
+                        class="form-control mb-2"
+                        name="container_name"
+                        placeholder="Container name"
+                        required
+                    />
+                    <input
+                        type="text"
+                        class="form-control mb-2"
+                        name="image_name"
+                        placeholder="Image name"
+                        required
+                    />
+                    <input
+                        type="text"
+                        class="form-control mb-2"
+                        name="image_tag"
+                        placeholder="Image tag"
+                    />
+                    <input
+                        type="text"
+                        class="form-control mb-2"
+                        name="host_port"
+                        placeholder="Host port (e.g., 5001)"
+                        required
+                    />
+                    <button type="submit" class="btn btn-warning">Run Container</button>
+                </form>
+                <div id="runMsg" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- List Docker Images -->
+        <div class="card mb-4">
+            <div class="card-header">Docker Images</div>
+            <div class="card-body">
+                <button onclick="listImages()" class="btn btn-info">List Images</button>
+                <pre id="imagesOutput" class="mt-2"></pre>
+            </div>
+        </div>
+
+        <!-- List Containers -->
+        <div class="card mb-4">
+            <div class="card-header">Running Containers</div>
+            <div class="card-body">
+                <button onclick="listContainers()" class="btn btn-info">
+                    List Containers
+                </button>
+                <pre id="containersOutput" class="mt-2"></pre>
+            </div>
+        </div>
+
+        <!-- Search Image (Requirement 8) -->
+        <div class="card mb-4">
+            <div class="card-header">Search Image</div>
+            <div class="card-body">
+                <form id="searchImageForm">
+                    <input
+                        type="text"
+                        name="search_term"
+                        class="form-control mb-2"
+                        placeholder="Enter image name or keyword"
+                        required
+                    />
+                    <button type="submit" class="btn btn-secondary">Search</button>
+                </form>
+                <div id="searchImageResult" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Stop Container -->
+        <div class="card mb-4">
+            <div class="card-header">Stop Container</div>
+            <div class="card-body">
+                <form id="stopContainerForm">
+                    <select name="container_name" id="runningContainers" class="form-select mb-2" required>
+                        <option value="">Select a running container</option>
+                    </select>
+                    <button type="submit" class="btn btn-danger">Stop</button>
+                </form>
+                <div id="stopContainerResult" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Search DockerHub (Requirement 9) -->
+        <div class="card mb-4">
+            <div class="card-header">Search DockerHub</div>
+            <div class="card-body">
+                <form id="searchDockerHubForm">
+                    <input
+                        type="text"
+                        name="search_term"
+                        class="form-control mb-2"
+                        placeholder="Enter image name (e.g., nginx)"
+                        required
+                    />
+                    <button type="submit" class="btn btn-secondary">Search DockerHub</button>
+                </form>
+                <div id="searchDockerHubResult" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Pull Image (Requirement 10) -->
+        <div class="card mb-4">
+            <div class="card-header">Pull Image from DockerHub</div>
+            <div class="card-body">
+                <form id="pullImageForm">
+                    <input
+                        type="text"
+                        name="image_name"
+                        class="form-control mb-2"
+                        placeholder="Image name (e.g., nginx)"
+                        required
+                    />
+                    <input
+                        type="text"
+                        name="tag"
+                        class="form-control mb-2"
+                        placeholder="Tag (e.g., latest, optional)"
+                    />
+                    <button type="submit" class="btn btn-primary">Pull Image</button>
+                </form>
+                <div id="pullImageResult" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Search Image Handler (Requirement 8)
+        document.getElementById('searchImageForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            const res = await fetch('/search_local_images', { method: 'POST', body: form }); // 👈 endpoint مختلف
+            const data = await res.json();
+            const resultDiv = document.getElementById('searchImageResult');
+            resultDiv.innerHTML = `<div class="alert alert-${data.status === 'success' ? 'success' : 'danger'}">
+                ${data.status === 'success' ? `<pre>${data.result}</pre>` : data.result}
+    </div>`;
+        };
+
+        // Create Dockerfile Handler
+        document.getElementById('dockerfileForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            const res = await fetch('/create_dockerfile', { method: 'POST', body: form });
+            const data = await res.json();
+            document.getElementById('dockerfileMsg').innerHTML = `<div class="alert alert-${data.status === 'success' ? 'success' : 'danger'}">${data.message}</div>`;
+        };
+
+        // Build Image Handler
+    document.getElementById('buildForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const resultDiv = document.getElementById('buildMsg');
+
+    // إظهار رسالة التحميل
+    resultDiv.innerHTML = `
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <div class="spinner-border text-info me-2" role="status" aria-hidden="true"></div>
+            <strong>Building image... Please wait.</strong>
+        </div>
+    `;
+
+    const form = new FormData(e.target);
+
+    try {
+        const res = await fetch('/build_image', {
+            method: 'POST',
+            body: form
+        });
+        const data = await res.json();
+
+        resultDiv.innerHTML = `
+            <div class="alert alert-${data.status === 'success' ? 'success' : 'danger'}">
+                <strong>${data.message}</strong><br>
+                ${data.output ? `<pre>${data.output}</pre>` : ''}
+            </div>
+        `;
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Error occurred!</strong><br>
+                <pre>${error}</pre>
+            </div>
+        `;
+    }
+};
+
+        
+
+        // Run Container Handler
+        document.getElementById('runForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            const res = await fetch('/run_container', { method: 'POST', body: form });
+            const data = await res.json();
+            const urlMatch = data.message?.match(/http:\/\/localhost:\d+/);
+            const url = urlMatch ? urlMatch[0] : null;
+            document.getElementById('runMsg').innerHTML = `<div class="alert alert-${data.status === 'success' ? 'success' : 'danger'}">
+                ${data.status === 'success' ? `
+                    ✅ <strong>${data.message}</strong><br>
+                    ${url ? `<a href="${url}" target="_blank">Open Container</a><br>` : ''}
+                    <pre>${data.output}</pre>
+                ` : data.output}
+            </div>`;
+            if(data.status === 'success') {
+                 await loadRunningContainers(); 
+    }
+        };
+
+        // List Images
+        async function listImages() {
+            const res = await fetch('/list_images');
+            const data = await res.json();
+            document.getElementById('imagesOutput').innerText = data.output || 'No images found';
+        }
+
+        // List Containers
+        async function listContainers() {
+            const res = await fetch('/list_containers');
+            const data = await res.json();
+            document.getElementById('containersOutput').innerText = data.output || 'No containers found';
+        }
+
+        // Stop Container Handler
+        document.getElementById('stopContainerForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const container = document.getElementById('stopContainerResult');
+    
+    // عرض رسالة تحميل مع spinner
+    container.innerHTML = `
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <div class="spinner-border text-info me-2" role="status" aria-hidden="true"></div>
+            <strong>Stopping container... Please wait.</strong>
+        </div>
+    `;
+
+    const form = new FormData(e.target);
+    try {
+        const res = await fetch('/stop_container', { method: 'POST', body: form });
+        const data = await res.json();
+
+        container.innerHTML = `<div class="alert alert-${data.status === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert">
+            ${data.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <strong>Error occurred!</strong><br>
+                <pre>${error}</pre>
+            </div>
+        `;
+    }
+};
+
+
+        // Search DockerHub Handler (Requirement 9)searchDockerHubResult
+        document.getElementById('searchDockerHubForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            const res = await fetch('/search_image', { method: 'POST', body: form });
+            const data = await res.json();
+            const resultDiv = document.getElementById('searchDockerHubResult');
+            resultDiv.innerHTML = `<div class="alert alert-${data.status === 'success' ? 'success' : 'danger'}">
+                ${data.status === 'success' ? `<pre>${data.result}</pre>` : data.result}
+            </div>`;
+        };
+
+        // Pull Image Handler (Requirement 10)
+        document.getElementById('pullImageForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const resultDiv = document.getElementById('pullImageResult');
+    
+    // عرض spinner أثناء التحميل
+    resultDiv.innerHTML = `
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <div class="spinner-border text-info me-2" role="status" aria-hidden="true"></div>
+            <strong>Loading... Please wait.</strong>
+        </div>
+    `;
+
+    const form = new FormData(e.target);
+    const res = await fetch('/pull_image', { method: 'POST', body: form });
+    const data = await res.json();
+
+    resultDiv.innerHTML = `<div class="alert alert-${data.status === 'success' ? 'success' : 'danger'}">
+        <strong>${data.message}</strong><br>
+        ${data.output ? `<pre>${data.output}</pre>` : data.result || ''}
+    </div>`;
+};
+
+
+        // Load Running Containers
+        async function loadRunningContainers() {
+            const res = await fetch('/list_running_containers');
+            const data = await res.json();
+            const select = document.getElementById('runningContainers');
+            select.innerHTML = '<option value="">Select a running container</option>';
+            if (data.status === 'success') {
+                data.containers.forEach(container => {
+                    const option = document.createElement('option');
+                    option.value = container.id;
+                    option.text = `${container.name} (${container.id})`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Load containers when page loads
+        window.onload = loadRunningContainers;
+    </script>
+</body>
+</html>
